@@ -1,0 +1,139 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title></title>
+
+<style type="text/css">
+	
+body{ margin:0; padding:0; }
+#img_slicer{ display:block; background:url(blondie.jpg); margin:20px auto; }
+.btn{ margin:20px auto; display:block; width:70px; text-align:center; padding:5px; background:black; color:white; cursor:pointer; }
+	
+</style>
+
+</head>
+
+<body>
+
+<canvas id='img_slicer' width='800' height='500'></canvas>
+<div class='shuffle btn'>click</div>
+<div class='reset btn'>reset</div>
+
+<script src='js/jquery-1.11.1.min.js'></script>
+<script src='js/easeljs-0.7.1.min.js'></script>
+<script>
+
+var img_slicer = document.getElementById('img_slicer');
+var ctx = img_slicer.getContext('2d');
+var stage;
+var spriteSheet;
+
+var blondie;
+var tileSize = 50;
+var _sprites;
+
+function init(){
+	blondie = new Image();
+	blondie.src = 'blondie.jpg';
+	blondie.onload = function(){
+		setStage();
+		
+		$('.btn').click(function(){
+			shuffleSprites();
+		});
+		$('.reset').click(function(){
+			resetSprites();
+		});
+	}
+}
+
+function setStage(){
+	var colNum = 800/tileSize;
+	var rowNum = 500/tileSize;
+	var numTiles = colNum * rowNum;
+	var data = { images: ["blondie.jpg"] , frames: {width:tileSize, height:tileSize} }
+	stage = new createjs.Stage(img_slicer);
+	stage.enableMouseOver(60);
+	createjs.Touch.enable(stage);
+	createjs.Ticker.setFPS(60);		
+	spriteSheet = new createjs.SpriteSheet(data);
+	
+	_sprites = new Array();
+	for(var i=0; i<numTiles; i++){
+		var xPos = tileSize * (i%colNum);
+		var yPos = tileSize * Math.floor(i/colNum)
+		//img_slice = ctx.drawImage(blondie,xPos,yPos,tileSize,tileSize,xPos,yPos,tileSize,tileSize);
+		var imgSprite = new createjs.Sprite(spriteSheet);
+		imgSprite.gotoAndStop(i);
+		imgSprite.x = imgSprite.myX = xPos;
+		imgSprite.y = imgSprite.myY = yPos;
+		imgSprite.myS = 1;
+		stage.addChild(imgSprite);
+		imgSprite.addEventListener('mouseover', sliceOn);
+		imgSprite.addEventListener('mouseout', sliceOff);
+		imgSprite.addEventListener('click', sliceClick);
+		_sprites.push(imgSprite);
+	}
+	
+	renderStage();	
+}
+
+function shuffleSprites(){
+	for(var i=0; i<_sprites.length; i++){
+		var imgSprite = _sprites[i];
+		imgSprite.alpha = 0.7;
+		imgSprite.myS = Math.random() * 2 + 0.5;
+		imgSprite.scaleX = imgSprite.scaleY = imgSprite.myS;
+		imgSprite.x = imgSprite.myX - (tileSize * (imgSprite.scaleX-1))/2;
+		imgSprite.y = imgSprite.myY - (tileSize * (imgSprite.scaleX-1))/2;
+	}
+	renderStage();	
+}
+
+function resetSprites(){
+	for(var i=0; i<_sprites.length; i++){
+		var imgSprite = _sprites[i];
+		imgSprite.alpha = 1;
+		imgSprite.myS = 1;
+		imgSprite.scaleX = imgSprite.scaleY = imgSprite.myS;
+		imgSprite.x = imgSprite.myX;
+		imgSprite.y = imgSprite.myY;
+	}
+	renderStage();	
+}
+
+function sliceOn( e ){
+	var target = e.currentTarget;
+	stage.setChildIndex(target, stage.getNumChildren()-1);
+	target.scaleX = target.scaleY = target.myS*1.2;
+	target.x = target.myX - (tileSize * (target.scaleX-1))/2;
+	target.y = target.myY - (tileSize * (target.scaleX-1))/2;
+	
+	renderStage();
+}
+function sliceOff( e ){
+	var target = e.currentTarget;
+	target.scaleX = target.scaleY = target.myS;
+	target.x = target.myX - (tileSize * (target.myS-1))/2;
+	target.y = target.myY - (tileSize * (target.myS-1))/2;
+	
+	renderStage();
+}
+
+function sliceClick( e ){
+	var target = e.currentTarget;
+	console.log(target);
+}
+
+function renderStage(){
+	stage.update();
+}
+
+init();
+
+
+</script>    
+    
+</body>
+</html>
